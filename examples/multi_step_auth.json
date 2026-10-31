@@ -1,0 +1,50 @@
+[
+  {
+    "name": "Three-step auth example",
+    "detail": "Replace auth.example.test and the demo credentials before running.",
+    "note": "Step 1 returns token1, step 2 returns token2, step 3 consumes both and returns AuthorToken.",
+    "ator_enabled": true,
+    "trigger_condition": "401",
+    "initial_variables": {
+      "username": "demo",
+      "password": "replace-me"
+    },
+    "headers_list": [
+      ["Authorization", "Bearer ${AuthorToken}"],
+      ["X-Session-Token", "${token1}"]
+    ],
+    "headers_to_remove": [],
+    "match_replace_list": [
+      ["ORIGINAL_TOKEN2", "${token2}"]
+    ],
+    "auth_steps": [
+      {
+        "name": "1. Login",
+        "https": true,
+        "expected_status": "200-299",
+        "request": "POST /login HTTP/1.1\r\nHost: auth.example.test\r\nContent-Type: application/json\r\n\r\n{\"username\":\"${username}\",\"password\":\"${password}\"}",
+        "extractors": [
+          {"variable": "token1", "source": "Body", "method": "JSON", "selector": "data.token", "end": ""}
+        ]
+      },
+      {
+        "name": "2. Exchange",
+        "https": true,
+        "expected_status": "200-299",
+        "request": "POST /exchange HTTP/1.1\r\nHost: auth.example.test\r\nAuthorization: Bearer ${token1}\r\nContent-Type: application/json\r\n\r\n{}",
+        "extractors": [
+          {"variable": "token2", "source": "Body", "method": "JSON", "selector": "token", "end": ""}
+        ]
+      },
+      {
+        "name": "3. Authorize",
+        "https": true,
+        "expected_status": "200-299",
+        "request": "POST /authorize HTTP/1.1\r\nHost: auth.example.test\r\nX-Token-One: ${token1}\r\nX-Token-Two: ${token2}\r\nContent-Type: application/json\r\n\r\n{\"token1\":\"${token1}\",\"token2\":\"${token2}\"}",
+        "extractors": [
+          {"variable": "AuthorToken", "source": "Body", "method": "JSON", "selector": "access_token", "end": ""}
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,5 @@
+__pycache__/
+*.py[cod]
+*$py.class
+data/output*.json
+Releases/data/output*.json
